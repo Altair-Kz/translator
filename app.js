@@ -1,7 +1,25 @@
 const MODEL_CACHE = "translator-models-v1";
-const TOTAL_DOWNLOAD_BYTES = 75800000;
+const PHRASES_KEY = "translator-phrases";
 const LANGUAGE_NAMES = { en: "English", zh: "中文" };
 const HTML_LANG = { en: "en", zh: "zh-Hans" };
+const DEFAULT_PHRASES = [
+  { text: "Where is the toilet?", lang: "en" },
+  { text: "How much is this?", lang: "en" },
+  { text: "I don't speak Chinese well.", lang: "en" },
+  { text: "Can you help me?", lang: "en" },
+  { text: "Please wait a moment.", lang: "en" },
+  { text: "Thank you very much!", lang: "en" },
+];
+const TERMS = { "zh-en": { "微信": " WeChat ", "支付宝": " Alipay " } };
+const PINYIN_MARKS = { ",": ",", "。": ".", "!": "!", "?": "?", ";": ";", ":": ":", "、": "," };
+const PINYIN_FIXES = {
+  "肚子": "dù zi", "妻子": "qī zi", "说得": "shuō de", "谢谢": "xiè xie", "客气": "kè qi",
+  "东西": "dōng xi", "地方": "dì fang", "鞋子": "xié zi", "裤子": "kù zi", "橙子": "chéng zi", "包子": "bāo zi",
+  "饺子": "jiǎo zi", "舒服": "shū fu", "朋友": "péng you", "时候": "shí hou", "先生": "xiān sheng", "告诉": "gào su",
+  "眼睛": "yǎn jing", "意思": "yì si", "麻烦": "má fan", "消息": "xiāo xi", "葡萄": "pú tao", "明白": "míng bai",
+  "名字": "míng zi", "学生": "xué sheng", "早上": "zǎo shang", "晚上": "wǎn shang", "我得": "wǒ děi",
+  "得快": "de kuài", "得好": "de hǎo", "得很": "de hěn",
+};
 
 const MODELS = {
   "en-zh": {
@@ -14,20 +32,46 @@ const MODELS = {
   "zh-en": {
     from: "zh",
     to: "en",
-    model: "models/zhen/model.zhen.intgemm.alphas.bin.gz",
-    shortlist: "models/zhen/lex.50.50.zhen.s2t.bin.gz",
-    vocabs: ["models/zhen/vocab.zhen.spm.gz"],
+    model: "models/zhen-v2.0/model.zhen.intgemm.alphas.bin.gz",
+    shortlist: "models/zhen-v2.0/lex.50.50.zhen.s2t.bin.gz",
+    vocabs: ["models/zhen-v2.0/vocab.zhen.spm.gz"],
   },
 };
-const MODEL_FILES = Object.values(MODELS).flatMap((m) => [m.model, m.shortlist, ...m.vocabs]);
+const OLD_ZH_EN = {
+  from: "zh",
+  to: "en",
+  model: "models/zhen/model.zhen.intgemm.alphas.bin.gz",
+  shortlist: "models/zhen/lex.50.50.zhen.s2t.bin.gz",
+  vocabs: ["models/zhen/vocab.zhen.spm.gz"],
+};
+const FILE_BYTES = {
+  "models/enzh/model.enzh.intgemm.alphas.bin.gz": 33370474,
+  "models/enzh/lex.50.50.enzh.s2t.bin.gz": 3443078,
+  "models/enzh/srcvocab.enzh.spm.gz": 407004,
+  "models/enzh/trgvocab.enzh.spm.gz": 423360,
+  "models/zhen-v2.0/model.zhen.intgemm.alphas.bin.gz": 44359714,
+  "models/zhen-v2.0/lex.50.50.zhen.s2t.bin.gz": 4720138,
+  "models/zhen-v2.0/vocab.zhen.spm.gz": 731199,
+};
+const filesOf = (m) => [m.model, m.shortlist, ...m.vocabs];
+const MODEL_FILES = Object.values(MODELS).flatMap(filesOf);
 
 const $ = (id) => document.getElementById(id);
 const input = $("input");
 const output = $("output");
+const pinyinLine = $("pinyin");
 const status = $("status");
+const showButton = $("show");
+const saveButton = $("save");
+const phrasesList = $("phrases");
+const stage = $("stage");
+const stageText = $("stage-text");
+const stagePinyin = $("stage-pinyin");
 
 let direction = "en-zh";
 let busy = false;
+let last = null;
+let phrases = loadPhrases();
 
 function setStatus(message, isError = false) {
   status.textContent = message;
@@ -47,10 +91,10 @@ function show(id) {
   for (const section of ["install", "download", "translator"]) $(section).hidden = section !== id;
 }
 
-async function missingFiles() {
+async function missingFiles(files = MODEL_FILES) {
   const cache = await caches.open(MODEL_CACHE);
-  const present = await Promise.all(MODEL_FILES.map((file) => cache.match(file)));
-  return MODEL_FILES.filter((_, index) => !present[index]);
+  const present = await Promise.all(files.map((file) => cache.match(file)));
+  return files.filter((_, index) => !present[index]);
 }
 
 async function downloadFile(cache, file, onBytes) {
@@ -68,21 +112,32 @@ async function downloadFile(cache, file, onBytes) {
   await cache.put(file, new Response(new Blob(chunks), { headers: { "Content-Type": "application/gzip" } }));
 }
 
+async function saveFiles(files, onBytes = () => {}) {
+  const cache = await caches.open(MODEL_CACHE);
+  for (const file of files) await downloadFile(cache, file, onBytes);
+}
+
 async function downloadModels(files) {
   show("download");
   $("retry").hidden = true;
-  const cache = await caches.open(MODEL_CACHE);
+  const total = files.reduce((sum, file) => sum + FILE_BYTES[file], 0);
   let received = 0;
   const update = () => {
-    $("progress").value = Math.min(received / TOTAL_DOWNLOAD_BYTES, 1);
-    $("download-status").textContent = `${Math.round(received / 1048576)} of about 72 MB. Keep this screen open.`;
+    $("progress").value = Math.min(received / total, 1);
+    $("download-status").textContent = `${Math.round(received / 1048576)} of about ${Math.round(total / 1048576)} MB. Keep this screen open.`;
   };
   update();
-  for (const file of files) {
-    await downloadFile(cache, file, (bytes) => {
-      received += bytes;
-      update();
-    });
+  await saveFiles(files, (bytes) => {
+    received += bytes;
+    update();
+  });
+}
+
+async function removeUnusedModels() {
+  const keep = new Set(MODEL_FILES.map((file) => new URL(file, location.href).href));
+  const cache = await caches.open(MODEL_CACHE);
+  for (const request of await cache.keys()) {
+    if (!keep.has(request.url)) await cache.delete(request);
   }
 }
 
@@ -148,12 +203,50 @@ function loadModel(key) {
   return loadedModels.get(key);
 }
 
+function fixKey(text) {
+  return text.toLowerCase().replace(/’/g, "'").replace(/^[\s.,!?;:…。,!?;:]+|[\s.,!?;:…。,!?;:]+$/g, "");
+}
+
+function applyTerms(text, key) {
+  let result = text;
+  for (const [term, replacement] of Object.entries(TERMS[key] || {})) result = result.replaceAll(term, replacement);
+  return result.trim();
+}
+
+pinyinPro.customPinyin(PINYIN_FIXES);
+
+function pinyinFor(text) {
+  return text
+    .split("\n")
+    .map((line) => pinyinPro.pinyin(line, { nonZh: "consecutive" })
+      .replace(/[,。!?;:、]/g, (mark) => `${PINYIN_MARKS[mark]} `)
+      .replace(/\s+/g, " ")
+      .replace(/\s([.,!?;:])/g, "$1")
+      .trim())
+    .join("\n");
+}
+
+function tidyChinese(text) {
+  return text.replace(/([,。!?;:、])\s+/g, "$1");
+}
+
 function renderDirection() {
   const { from, to } = MODELS[direction];
   $("from-label").textContent = LANGUAGE_NAMES[from];
   $("to-label").textContent = LANGUAGE_NAMES[to];
   input.lang = HTML_LANG[from];
   output.lang = HTML_LANG[to];
+}
+
+function isSaved() {
+  return phrases.some((p) => p.text === last.text && p.lang === last.from);
+}
+
+function render() {
+  output.textContent = last ? last.translation : "";
+  pinyinLine.textContent = last ? last.pinyin : "";
+  showButton.disabled = !last;
+  saveButton.disabled = !last || isSaved();
 }
 
 async function translate() {
@@ -164,41 +257,127 @@ async function translate() {
   $("translate").disabled = true;
   const key = direction;
   const { from, to } = MODELS[key];
-  const started = performance.now();
   try {
-    if (!loadedModels.has(key)) setStatus("Loading the translation model…");
-    await loadModel(key);
-    setStatus("Translating…");
-    const translateStarted = performance.now();
-    const [result] = await callWorker("translate", {
-      models: [{ from, to }],
-      texts: [{ text, html: false, qualityScores: false }],
-    });
-    output.textContent = result.target.text;
-    const translateSeconds = (performance.now() - translateStarted) / 1000;
-    const totalSeconds = (performance.now() - started) / 1000;
-    setStatus(`Translated in ${translateSeconds.toFixed(1)} s (total ${totalSeconds.toFixed(1)} s)`);
+    let translation = FIXES[key]?.[fixKey(text)];
+    if (translation === undefined) {
+      if (!loadedModels.has(key)) setStatus("Loading the translation model…");
+      await loadModel(key);
+      setStatus("Translating…");
+      const [result] = await callWorker("translate", {
+        models: [{ from, to }],
+        texts: [{ text: applyTerms(text, key), html: false, qualityScores: false }],
+      });
+      translation = to === "zh" ? tidyChinese(result.target.text) : result.target.text;
+    }
+    last = { text, from, to, translation, pinyin: to === "zh" ? pinyinFor(translation) : "" };
+    setStatus("");
   } catch (error) {
-    output.textContent = "";
+    last = null;
     setStatus(error.message, true);
   } finally {
     busy = false;
     $("translate").disabled = false;
+    render();
   }
 }
 
 function swapDirection() {
   direction = direction === "en-zh" ? "zh-en" : "en-zh";
-  if (output.textContent) input.value = output.textContent;
-  output.textContent = "";
+  if (last) input.value = last.translation;
+  last = null;
   setStatus("");
+  render();
   renderDirection();
   input.focus();
   input.select();
 }
 
+function loadPhrases() {
+  try {
+    return JSON.parse(localStorage.getItem(PHRASES_KEY)) || DEFAULT_PHRASES.slice();
+  } catch {
+    return DEFAULT_PHRASES.slice();
+  }
+}
+
+function storePhrases() {
+  try {
+    localStorage.setItem(PHRASES_KEY, JSON.stringify(phrases));
+  } catch {
+    setStatus("Could not save this phrase on this device.", true);
+  }
+}
+
+function renderPhrases() {
+  phrasesList.replaceChildren(
+    ...phrases.map((phrase) => {
+      const item = document.createElement("li");
+
+      const use = document.createElement("button");
+      use.type = "button";
+      use.textContent = phrase.text;
+      use.lang = HTML_LANG[phrase.lang];
+      use.addEventListener("click", () => usePhrase(phrase));
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `Remove: ${phrase.text}`);
+      remove.addEventListener("click", () => removePhrase(phrase));
+
+      item.append(use, remove);
+      return item;
+    })
+  );
+  render();
+}
+
+function usePhrase(phrase) {
+  direction = phrase.lang === "en" ? "en-zh" : "zh-en";
+  renderDirection();
+  input.value = phrase.text;
+  translate();
+}
+
+function savePhrase() {
+  phrases.push({ text: last.text, lang: last.from });
+  storePhrases();
+  renderPhrases();
+}
+
+function removePhrase(phrase) {
+  phrases = phrases.filter((p) => p !== phrase);
+  storePhrases();
+  renderPhrases();
+}
+
+function fitStage() {
+  const maxHeight = window.innerHeight * 0.62;
+  const maxWidth = stageText.clientWidth;
+  let size = Math.floor(window.innerHeight * 0.4);
+  stageText.style.fontSize = `${size}px`;
+  while (size > 24 && (stageText.scrollHeight > maxHeight || stageText.scrollWidth > maxWidth)) {
+    size = Math.floor(size * 0.92);
+    stageText.style.fontSize = `${size}px`;
+  }
+}
+
+function openStage() {
+  stageText.textContent = last.translation;
+  stageText.lang = HTML_LANG[last.to];
+  stagePinyin.textContent = last.pinyin;
+  stage.hidden = false;
+  fitStage();
+}
+
+function closeStage() {
+  stage.hidden = true;
+}
+
 async function openTranslator() {
   renderDirection();
+  renderPhrases();
   show("translator");
   startEngine().catch((error) => setStatus(error.message, true));
   await navigator.storage?.persist?.();
@@ -206,10 +385,21 @@ async function openTranslator() {
   $("offline").textContent = "Ready. This now works without internet.";
 }
 
+async function canUseOldChineseModel() {
+  return (await missingFiles([...filesOf(MODELS["en-zh"]), ...filesOf(OLD_ZH_EN)])).length === 0;
+}
+
 async function start() {
   try {
     const files = await missingFiles();
-    if (files.length) await downloadModels(files);
+    if (!files.length) {
+      await removeUnusedModels();
+    } else if (await canUseOldChineseModel()) {
+      MODELS["zh-en"] = OLD_ZH_EN;
+      saveFiles(files).catch(() => {});
+    } else {
+      await downloadModels(files);
+    }
     await openTranslator();
   } catch (error) {
     show("download");
@@ -228,8 +418,20 @@ $("translate").addEventListener("click", translate);
 $("swap").addEventListener("click", swapDirection);
 $("retry").addEventListener("click", start);
 $("continue").addEventListener("click", start);
+showButton.addEventListener("click", openStage);
+saveButton.addEventListener("click", savePhrase);
+stage.addEventListener("click", closeStage);
+window.addEventListener("resize", () => {
+  if (!stage.hidden) fitStage();
+});
 
-navigator.serviceWorker?.register("sw.js");
+if (navigator.serviceWorker) {
+  const hadWorker = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadWorker) location.reload();
+  });
+  navigator.serviceWorker.register("sw.js");
+}
 
 if (isIOS() && !isInstalled()) show("install");
 else start();

@@ -1,10 +1,12 @@
-const APP_CACHE = "translator-app-v1";
+const APP_CACHE = "translator-app-v2";
 const MODEL_CACHE = "translator-models-v1";
 const APP_FILES = [
   "./",
   "index.html",
   "style.css",
   "app.js",
+  "fixes.js",
+  "pinyin-pro.js",
   "manifest.webmanifest",
   "icon-180.png",
   "icon-192.png",
@@ -15,7 +17,8 @@ const APP_FILES = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(APP_CACHE).then((cache) => cache.addAll(APP_FILES)).then(() => self.skipWaiting()));
+  const requests = APP_FILES.map((file) => new Request(file, { cache: "reload" }));
+  event.waitUntil(caches.open(APP_CACHE).then((cache) => cache.addAll(requests)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {

@@ -21,7 +21,7 @@
         <li>Tap <strong>Add to Home Screen</strong>.</li>
         <li>Open <strong>Translator</strong> from your Home Screen.</li>
       </ol>
-      <p class="note">The icon downloads the translation files once (about 72 MB). After that it works without internet.</p>
+      <p class="note">The icon downloads the translation files once (about 83 MB). After that it works without internet.</p>
       <button id="continue" type="button">Continue in Safari anyway</button>
     </section>
 
@@ -44,15 +44,32 @@
 
       <section class="result" aria-live="polite">
         <p id="output" class="output"></p>
+        <p id="pinyin" class="pinyin"></p>
         <p id="status" class="status"></p>
       </section>
+
+      <div class="actions">
+        <button id="show" class="primary" type="button" disabled>Show full screen</button>
+        <button id="save" type="button" disabled>Save phrase</button>
+      </div>
+
+      <h2>Saved phrases</h2>
+      <ul id="phrases" class="phrases"></ul>
 
       <p id="offline" class="note"></p>
     </section>
 
-    <p class="credit">Translation engine and models: Mozilla Bergamot (MPL-2.0)</p>
+    <p class="credit">Translation engine and models: Mozilla Bergamot (MPL-2.0). Pinyin: pinyin-pro (MIT).</p>
   </main>
 
+  <div id="stage" class="stage" role="dialog" aria-label="Translation, full screen" hidden>
+    <p id="stage-text" class="stage-text"></p>
+    <p id="stage-pinyin" class="stage-pinyin"></p>
+    <p class="stage-hint">Tap to close</p>
+  </div>
+
+  <script src="fixes.js"></script>
+  <script src="pinyin-pro.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
