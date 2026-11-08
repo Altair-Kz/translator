@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Translator">
+  <meta name="theme-color" content="#f6f3ec" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)">
+  <title>Offline Translator</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <section id="install" class="panel" hidden>
+      <h1>Add to Home Screen first</h1>
+      <ol>
+        <li>Tap the <strong>Share</strong> button in Safari.</li>
+        <li>Tap <strong>Add to Home Screen</strong>.</li>
+        <li>Open <strong>Translator</strong> from your Home Screen.</li>
+      </ol>
+      <p class="note">The icon downloads the translation files once (about 72 MB). After that it works without internet.</p>
+      <button id="continue" type="button">Continue in Safari anyway</button>
+    </section>
+
+    <section id="download" class="panel" hidden>
+      <h1>Downloading translation files</h1>
+      <progress id="progress" max="1" value="0"></progress>
+      <p id="download-status" class="note"></p>
+      <button id="retry" class="primary" type="button" hidden>Try again</button>
+    </section>
+
+    <section id="translator" hidden>
+      <div class="languages">
+        <span id="from-label"></span>
+        <button id="swap" type="button" aria-label="Swap languages">⇄</button>
+        <span id="to-label"></span>
+      </div>
+
+      <textarea id="input" rows="3" maxlength="2000" placeholder="Type here"></textarea>
+      <button id="translate" class="primary wide" type="button">Translate</button>
+
+      <section class="result" aria-live="polite">
+        <p id="output" class="output"></p>
+        <p id="status" class="status"></p>
+      </section>
+
+      <p id="offline" class="note"></p>
+    </section>
+
+    <p class="credit">Translation engine and models: Mozilla Bergamot (MPL-2.0)</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

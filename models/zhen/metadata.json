@@ -1,0 +1,11 @@
+{
+  "source": "Mozilla Firefox translations-models",
+  "from": "zh-Hans",
+  "to": "en",
+  "version": "2.1",
+  "files": {
+    "vocab": "vocab.zhen.spm",
+    "model": "model.zhen.intgemm.alphas.bin",
+    "lex": "lex.50.50.zhen.s2t.bin"
+  }
+}
