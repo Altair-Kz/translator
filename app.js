@@ -93,6 +93,13 @@ function showAndroidSteps() {
   $("continue").textContent = "Try it in the browser without installing";
 }
 
+function showDesktopSteps() {
+  $("ios-steps").hidden = true;
+  $("desktop-steps").hidden = false;
+  $("install-title").textContent = "Open it on your phone";
+  $("continue").textContent = "Try it on this computer";
+}
+
 function isInstalled() {
   return navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 }
@@ -444,5 +451,7 @@ if (navigator.serviceWorker) {
 }
 
 if (isAndroid()) showAndroidSteps();
-if ((isIOS() || isAndroid()) && !isInstalled()) show("install");
-else start();
+else if (!isIOS()) showDesktopSteps();
+
+if (isInstalled()) start();
+else show("install");
