@@ -1,6 +1,6 @@
 {
-  "name": "Offline Translator",
-  "short_name": "Translator",
+  "name": "Altranslator",
+  "short_name": "Altranslator",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
