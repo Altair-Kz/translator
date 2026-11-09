@@ -1,4 +1,4 @@
-const APP_CACHE = "translator-app-v3";
+const APP_CACHE = "translator-app-v4";
 const MODEL_CACHE = "translator-models-v1";
 const APP_FILES = [
   "./",
