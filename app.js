@@ -83,6 +83,16 @@ function isIOS() {
     || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
+function isAndroid() {
+  return /Android/.test(navigator.userAgent);
+}
+
+function showAndroidSteps() {
+  $("ios-steps").hidden = true;
+  $("android-steps").hidden = false;
+  $("continue").textContent = "Try it in the browser without installing";
+}
+
 function isInstalled() {
   return navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 }
@@ -433,5 +443,6 @@ if (navigator.serviceWorker) {
   navigator.serviceWorker.register("sw.js");
 }
 
-if (isIOS() && !isInstalled()) show("install");
+if (isAndroid()) showAndroidSteps();
+if ((isIOS() || isAndroid()) && !isInstalled()) show("install");
 else start();

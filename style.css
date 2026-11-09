@@ -251,7 +251,7 @@ h2 {
   color: var(--accent);
 }
 
-@media (orientation: portrait) and (max-height: 620px) {
+@media (orientation: portrait) and (max-height: 700px), (orientation: portrait) and (max-width: 340px) {
   main:has(.landing:not([hidden])) { padding-top: 12px; padding-bottom: 8px; }
   .landing { gap: 10px; }
   .app-icon { width: 52px; height: 52px; margin-bottom: 4px; border-radius: 12px; }
