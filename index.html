@@ -2,99 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Altranslator">
-  <meta name="theme-color" content="#f6f3ec" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)">
-  <title>Altranslator: offline English and Chinese translator</title>
-  <meta name="description" content="Altranslator is a free offline translator for English and Chinese with pinyin. Add it to your phone once and translate without internet.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Altranslator is now Sozkopir</title>
   <meta name="google-site-verification" content="P8vvQXKAA_tYObyVLhXT0SYrle3ok2MuCf60QJGrdVE">
-  <link rel="canonical" href="https://altair-kz.github.io/translator/">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://altair-kz.github.io/translator/">
-  <meta property="og:title" content="Altranslator">
-  <meta property="og:description" content="Free offline translator for English and Chinese with pinyin.">
-  <meta property="og:image" content="https://altair-kz.github.io/translator/icon-512.png">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icon-180.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="canonical" href="https://sozkopir.github.io/">
+  <meta http-equiv="refresh" content="0; url=https://sozkopir.github.io/">
+  <script>location.replace("https://sozkopir.github.io/");</script>
+  <style>
+    :root { color-scheme: light dark; --bg: #f6f3ec; --text: #1d1b18; --accent: #b5321f; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #171614; --text: #f2efe8; --accent: #e0654f; } }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--text); font: 18px/1.5 -apple-system, system-ui, sans-serif; text-align: center; padding: 0 16px; }
+    a { color: var(--accent); font-weight: 600; }
+  </style>
 </head>
 <body>
   <main>
-    <section id="install" class="landing" hidden>
-      <header class="hero">
-        <img class="app-icon" src="icon-180.png" alt="">
-        <h1>Altranslator</h1>
-      </header>
-
-      <div class="panel">
-        <h2 id="install-title">Add to Home Screen first</h2>
-        <ol id="ios-steps">
-          <li>Tap the <strong>Share</strong> button in Safari.</li>
-          <li>Tap <strong>Add to Home Screen</strong>.</li>
-          <li>Open <strong>Altranslator</strong> from your Home Screen.</li>
-        </ol>
-        <ol id="desktop-steps" hidden>
-          <li>Open this page on your <strong>phone</strong>.</li>
-          <li>Tap <strong>Add to Home Screen</strong> in the browser menu.</li>
-          <li>Open <strong>Altranslator</strong> from your Home Screen.</li>
-        </ol>
-        <ol id="android-steps" hidden>
-          <li>Tap the <strong>⋮</strong> menu in your browser.</li>
-          <li>Tap <strong>Add to Home screen</strong> or <strong>Install app</strong>.</li>
-          <li>Open <strong>Altranslator</strong> from your Home Screen.</li>
-        </ol>
-        <p class="note">The icon downloads the translation files once (about 83 MB). After that it works without internet.</p>
-        <button id="continue" type="button">Try it in Safari without installing</button>
-      </div>
-    </section>
-
-    <section id="download" class="panel" hidden>
-      <h1>Downloading translation files</h1>
-      <progress id="progress" max="1" value="0"></progress>
-      <p id="download-status" class="note"></p>
-      <button id="retry" class="primary" type="button" hidden>Try again</button>
-    </section>
-
-    <section id="translator" hidden>
-      <div class="languages">
-        <span id="from-label"></span>
-        <button id="swap" type="button" aria-label="Swap languages">⇄</button>
-        <span id="to-label"></span>
-      </div>
-
-      <textarea id="input" rows="3" maxlength="2000" placeholder="Type here"></textarea>
-      <button id="translate" class="primary wide" type="button">Translate</button>
-
-      <section class="result" aria-live="polite">
-        <p id="output" class="output"></p>
-        <p id="pinyin" class="pinyin"></p>
-        <p id="status" class="status"></p>
-      </section>
-
-      <div class="actions">
-        <button id="show" class="primary" type="button" disabled>Show full screen</button>
-        <button id="save" type="button" disabled>Save phrase</button>
-      </div>
-
-      <h2>Saved phrases</h2>
-      <ul id="phrases" class="phrases"></ul>
-
-      <p id="offline" class="note"></p>
-    </section>
-
-    <p class="credit">Translation engine and models: Mozilla Bergamot (MPL-2.0). Pinyin: pinyin-pro (MIT).</p>
+    <h1>Altranslator is now Sozkopir</h1>
+    <p>The translator moved to a new address.</p>
+    <p><a href="https://sozkopir.github.io/">Open Sozkopir</a></p>
   </main>
-
-  <div id="stage" class="stage" role="dialog" aria-label="Translation, full screen" hidden>
-    <p id="stage-text" class="stage-text"></p>
-    <p id="stage-pinyin" class="stage-pinyin"></p>
-    <p class="stage-hint">Tap to close</p>
-  </div>
-
-  <script src="fixes.js"></script>
-  <script src="pinyin-pro.js"></script>
-  <script src="app.js"></script>
 </body>
 </html>
